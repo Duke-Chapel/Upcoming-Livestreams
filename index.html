@@ -1,29 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upcoming Live Streams</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upcoming Live Streams</title>
+  <style>
+    #videos {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    iframe {
+      width: 100%;
+      aspect-ratio: 16/9;
+    }
+  </style>
 </head>
 <body>
-    <h1>Upcoming Live Streams</h1>
-    <div id="videos"></div>
+  <h1>Upcoming Live Streams</h1>
+  <div id="videos"></div>
 
-    <script>
-        // Replace with your Cloud Function URL
-        fetch('https://us-east1-embed-youtube-livestream-app.cloudfunctions.net/fetchUpcomingLiveStreams')
-        .then(response => response.json())
-        .then(data => {
-            let videoContainer = document.getElementById('videos');
-            data.forEach(video => {
-                let iframe = document.createElement('iframe');
-                iframe.src = `https://www.youtube.com/embed/${video.id.videoId}`;
-                iframe.width = "560";
-                iframe.height = "315";
-                videoContainer.appendChild(iframe);
-            });
-        })
-        .catch(error => console.log('Error fetching videos:', error));
-    </script>
+  <script>
+    // Replace with your Cloud Function URL
+    fetch('https://us-east1-embed-youtube-livestream-app.cloudfunctions.net/fetchUpcomingLiveStreams')
+      .then(response => response.json())
+      .then(data => {
+        const videoContainer = document.getElementById('videos');
+        data.forEach(video => {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube.com/embed/${video.id.videoId}`;
+          videoContainer.appendChild(iframe);
+        });
+      })
+      .catch(error => console.error('Error fetching videos:', error));
+  </script>
 </body>
 </html>
