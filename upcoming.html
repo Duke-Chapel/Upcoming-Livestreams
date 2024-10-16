@@ -1,0 +1,89 @@
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: white;
+  }
+
+  .video-wrapper {
+    width: 90%; /* Make the video responsive within the parent container */
+    max-width: 800px;
+    margin: auto;
+  }
+
+  .video-container {
+    position: relative;
+    width: 100%; /* Ensures the width is responsive */
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0; /* Ensures height is controlled by padding-bottom */
+    overflow: hidden;
+  }
+
+  .video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Full width within the container */
+    height: 100%; /* Full height within the container */
+    border: 0;
+  }
+</style>
+
+<body>
+  <div class="video-wrapper">
+    <div id="video-container" class="video-container"></div>
+  </div>
+
+  <script>
+    const API_KEY = 'AIzaSyBuoIV7cSxilFJd2DBJ-fNF-mO_HEJfjhM';
+    const CHANNEL_ID = 'UC6PnY_FQmr-0bFN1aK22hBg';
+
+    function isCacheValid(timestamp) {
+      const oneDay = 24 * 60 * 60 * 1000;
+      return Date.now() - timestamp < oneDay;
+    }
+
+    async function fetchDataWithCache(apiUrl, cacheKey) {
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+
+      if (cachedData && cachedTimestamp && isCacheValid(parseInt(cachedTimestamp))) {
+        console.log(`${cacheKey} - Loaded from cache`);
+        return JSON.parse(cachedData);
+      } else {
+        console.log(`${cacheKey} - Fetching new data`);
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        localStorage.setItem(`${cacheKey}_timestamp`, Date.now());
+
+        return data;
+      }
+    }
+
+    async function displayUpcomingLivestream() {
+      const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&eventType=upcoming&type=video&order=date&maxResults=1&channelId=${CHANNEL_ID}&key=${API_KEY}`;
+      const data = await fetchDataWithCache(apiUrl, 'upcomingLivestreams');
+
+      if (data.items && data.items.length > 0) {
+        const videoId = data.items[0].id.videoId;
+        document.getElementById('video-container').innerHTML = `
+          <iframe 
+            src="https://www.youtube.com/embed/${videoId}" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+          </iframe>`;
+      } else {
+        document.getElementById('video-container').innerHTML = '<p>No upcoming livestreams available.</p>';
+      }
+    }
+
+    window.onload = displayUpcomingLivestream;
+  </script>
+</body>
