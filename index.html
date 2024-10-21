@@ -43,7 +43,8 @@
         const videoContainer = document.getElementById('videos');
         const errorContainer = document.getElementById('error');
 
-        if (data.length === 0) {
+        // Handle case where no upcoming live streams are found
+        if (!data || Object.keys(data).length === 0) {
           errorContainer.textContent = 'No upcoming live streams found.';
           return;
         }
@@ -51,12 +52,11 @@
         // Clear previous error messages
         errorContainer.textContent = '';
 
-        // Dynamically create iframes for each video
-        data.forEach(video => {
-          const iframe = document.createElement('iframe');
-          iframe.src = `https://www.youtube.com/embed/${video.id.videoId}`;
-          videoContainer.appendChild(iframe);
-        });
+        // Create an iframe for the next upcoming video
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${data.id.videoId}`;
+        videoContainer.appendChild(iframe);
+
       } catch (error) {
         console.error('Error fetching videos:', error);
         document.getElementById('error').textContent = 'Failed to load videos. Please try again later.';
