@@ -83,7 +83,16 @@
   </div>
 
   <script>
+    let lastFetchTime = 0;
+    const FETCH_COOLDOWN = 10000; // 10 seconds cooldown between fetches
+
     async function fetchVideos() {
+      const currentTime = Date.now();
+      if (currentTime - lastFetchTime < FETCH_COOLDOWN) {
+        return; // Skip if fetched too recently
+      }
+      lastFetchTime = currentTime;
+
       const loadingEl = document.getElementById('loading');
       const videoContainer = document.getElementById('videos');
       const errorContainer = document.getElementById('error');
@@ -91,6 +100,9 @@
       try {
         loadingEl.style.display = 'block';
         errorContainer.style.display = 'none';
+        
+        // Clear existing content
+        videoContainer.innerHTML = '';
         
         const response = await fetch('https://us-east1-embed-youtube-livestream-app.cloudfunctions.net/fetchUpcomingLiveStreams');
         
@@ -152,11 +164,11 @@
       }
     }
 
-    // Call the function to fetch and display videos when the page loads
+    // Initial fetch
     fetchVideos();
 
-    // Refresh the data every 5 minutes
-    setInterval(fetchVideos, 300000);
+    // Refresh the data every minute
+    setInterval(fetchVideos, 60000); // Changed to 1 minute
   </script>
 </body>
 </html>
