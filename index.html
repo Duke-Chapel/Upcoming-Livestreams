@@ -3,7 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upcoming Livestream</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .video-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .video-info {
+      margin-top: 20px;
+    }
+
+    .video-title {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .video-description {
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .video-time {
+      color: #007bff;
+      font-weight: bold;
+    }
+
     #videos {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -14,57 +54,109 @@
       width: 100%;
       aspect-ratio: 16/9;
       border: none;
+      border-radius: 4px;
     }
 
     .error {
-      color: red;
+      color: #dc3545;
       font-weight: bold;
       text-align: center;
       margin-top: 20px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <div id="videos"></div>
-  <div id="error" class="error"></div>
+  <div class="container">
+    <div id="loading" class="loading">Loading upcoming livestream...</div>
+    <div id="videos"></div>
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
 
   <script>
     async function fetchVideos() {
+      const loadingEl = document.getElementById('loading');
+      const videoContainer = document.getElementById('videos');
+      const errorContainer = document.getElementById('error');
+
       try {
+        loadingEl.style.display = 'block';
+        errorContainer.style.display = 'none';
+        
         const response = await fetch('https://us-east1-embed-youtube-livestream-app.cloudfunctions.net/fetchUpcomingLiveStreams');
         
-        // Check if the response is OK (status 200-299)
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
         const data = await response.json();
-
-        const videoContainer = document.getElementById('videos');
-        const errorContainer = document.getElementById('error');
+        
+        // Clear loading message
+        loadingEl.style.display = 'none';
 
         // Handle case where no upcoming live streams are found
-        if (!data || Object.keys(data).length === 0) {
+        if (data.message === 'No upcoming livestreams found.') {
           errorContainer.textContent = 'No upcoming live streams found.';
+          errorContainer.style.display = 'block';
           return;
         }
 
-        // Clear previous error messages
-        errorContainer.textContent = '';
+        // Create video card with details
+        const videoCard = document.createElement('div');
+        videoCard.className = 'video-card';
 
-        // Create an iframe for the next upcoming video
+        // Create and append iframe
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${data.id.videoId}`;
-        videoContainer.appendChild(iframe);
+        iframe.src = `https://www.youtube.com/embed/${data.id}`;
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        videoCard.appendChild(iframe);
+
+        // Add video information
+        const videoInfo = document.createElement('div');
+        videoInfo.className = 'video-info';
+
+        const title = document.createElement('div');
+        title.className = 'video-title';
+        title.textContent = data.title;
+        videoInfo.appendChild(title);
+
+        const description = document.createElement('div');
+        description.className = 'video-description';
+        description.textContent = data.description;
+        videoInfo.appendChild(description);
+
+        const time = document.createElement('div');
+        time.className = 'video-time';
+        const startTime = new Date(data.scheduledStartTime);
+        time.textContent = `Scheduled for: ${startTime.toLocaleString()}`;
+        videoInfo.appendChild(time);
+
+        videoCard.appendChild(videoInfo);
+        videoContainer.appendChild(videoCard);
 
       } catch (error) {
         console.error('Error fetching videos:', error);
-        document.getElementById('error').textContent = 'Failed to load videos. Please try again later.';
+        loadingEl.style.display = 'none';
+        errorContainer.textContent = 'Failed to load videos. Please try again later.';
+        errorContainer.style.display = 'block';
       }
     }
 
-    // Call the function to fetch and display videos
+    // Call the function to fetch and display videos when the page loads
     fetchVideos();
+
+    // Refresh the data every 5 minutes
+    setInterval(fetchVideos, 300000);
   </script>
 </body>
 </html>
