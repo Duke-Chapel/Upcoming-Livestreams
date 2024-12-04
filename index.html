@@ -168,12 +168,6 @@
     title.textContent = data.title;
     videoInfo.appendChild(title);
 
-    const time = document.createElement('div');
-    time.className = 'video-time';
-    const startTime = new Date(data.scheduledStartTime);
-    time.textContent = `${startTime.toLocaleDateString()}`;
-    videoInfo.appendChild(time);
-
     videoCard.appendChild(videoInfo);
     videoContainer.appendChild(videoCard);
 
