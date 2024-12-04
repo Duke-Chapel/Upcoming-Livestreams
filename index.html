@@ -126,82 +126,64 @@
     const FETCH_COOLDOWN = 10000; // 10 seconds cooldown between fetches
 
     async function fetchVideos() {
-      const currentTime = Date.now();
-      if (currentTime - lastFetchTime < FETCH_COOLDOWN) {
-        return; // Skip if fetched too recently
-      }
-      lastFetchTime = currentTime;
+  if (Date.now() - lastFetchTime < FETCH_COOLDOWN) return;
+  lastFetchTime = Date.now();
 
-      const loadingEl = document.getElementById('loading');
-      const videoContainer = document.getElementById('videos');
-      const errorContainer = document.getElementById('error');
+  const loadingEl = document.getElementById('loading');
+  const videoContainer = document.getElementById('videos');
+  const errorContainer = document.getElementById('error');
 
-      try {
-        loadingEl.style.display = 'block';
-        errorContainer.style.display = 'none';
-        
-        // Clear existing content
-        videoContainer.innerHTML = '';
-        
-        const response = await fetch('https://us-east1-embed-youtube-livestream-app.cloudfunctions.net/fetchUpcomingLiveStreams');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+  try {
+    loadingEl.style.display = 'block';
+    errorContainer.style.display = 'none';
+    videoContainer.innerHTML = '';
+    
+    const response = await fetch('https://us-east1-embed-youtube-livestream-app.cloudfunctions.net/fetchUpcomingLiveStreams');
+    
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    const data = await response.json();
+    
+    loadingEl.style.display = 'none';
 
-        const data = await response.json();
-        
-        // Clear loading message
-        loadingEl.style.display = 'none';
-
-        // Handle case where no upcoming live streams are found
-        if (data.message === 'No upcoming livestreams found.') {
-          errorContainer.textContent = 'No upcoming live streams found.';
-          errorContainer.style.display = 'block';
-          return;
-        }
-
-        // Create video card with details
-        const videoCard = document.createElement('div');
-        videoCard.className = 'video-card';
-
-        // Create and append iframe
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${data.id}`;
-        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-        iframe.allowFullscreen = true;
-        videoCard.appendChild(iframe);
-
-        // Add video information
-        const videoInfo = document.createElement('div');
-        videoInfo.className = 'video-info';
-
-        const title = document.createElement('div');
-        title.className = 'video-title';
-        title.textContent = data.title;
-        videoInfo.appendChild(title);
-
-        const description = document.createElement('div');
-        description.className = 'video-description';
-        description.textContent = data.description;
-        videoInfo.appendChild(description);
-
-        const time = document.createElement('div');
-        time.className = 'video-time';
-        const startTime = new Date(data.scheduledStartTime);
-        time.textContent = `Scheduled for: ${startTime.toLocaleString()}`;
-        videoInfo.appendChild(time);
-
-        videoCard.appendChild(videoInfo);
-        videoContainer.appendChild(videoCard);
-
-      } catch (error) {
-        console.error('Error fetching videos:', error);
-        loadingEl.style.display = 'none';
-        errorContainer.textContent = 'Failed to load videos. Please try again later.';
-        errorContainer.style.display = 'block';
-      }
+    if (data.message === 'No upcoming livestreams found.') {
+      errorContainer.textContent = 'No upcoming live streams found.';
+      errorContainer.style.display = 'block';
+      return;
     }
+
+    const videoCard = document.createElement('div');
+    videoCard.className = 'video-card';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube.com/embed/${data.id}`;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    videoCard.appendChild(iframe);
+
+    const videoInfo = document.createElement('div');
+    videoInfo.className = 'video-info';
+
+    const title = document.createElement('div');
+    title.className = 'video-title';
+    title.textContent = data.title;
+    videoInfo.appendChild(title);
+
+    const time = document.createElement('div');
+    time.className = 'video-time';
+    const startTime = new Date(data.scheduledStartTime);
+    time.textContent = `${startTime.toLocaleDateString()}`;
+    videoInfo.appendChild(time);
+
+    videoCard.appendChild(videoInfo);
+    videoContainer.appendChild(videoCard);
+
+  } catch (error) {
+    console.error('Error:', error);
+    loadingEl.style.display = 'none';
+    errorContainer.textContent = 'Failed to load videos. Please try again later.';
+    errorContainer.style.display = 'block';
+  }
+}
 
     // Initial fetch
     fetchVideos();
